@@ -22,6 +22,7 @@ DEPREL = 'deprel'
 DEPS = 'deps'
 MISC = 'misc'
 NER = 'ner'
+LAS = 'las'
 START_CHAR = 'start_char'
 END_CHAR = 'end_char'
 TYPE = 'type'
@@ -577,7 +578,7 @@ class Word:
         """
         assert word_entry.get(ID) and word_entry.get(TEXT), 'id and text should be included for the word. {}'.format(word_entry)
         self._id, self._text, self._lemma, self._upos, self._xpos, self._feats, self._head, self._deprel, self._deps, \
-            self._misc, self._parent = [None] * 11
+            self._misc, self._las, self._parent = [None] * 12
 
         self.id = word_entry.get(ID)
         self.text = word_entry.get(TEXT)
@@ -589,6 +590,7 @@ class Word:
         self.deprel = word_entry.get(DEPREL, None)
         self.deps = word_entry.get(DEPS, None)
         self.misc = word_entry.get(MISC, None)
+        self.las = word_entry.get(LAS, None)
 
         if self.misc is not None:
             self.init_from_misc()
@@ -686,6 +688,16 @@ class Word:
         self._deprel = value if self._is_null(value) == False else None
 
     @property
+    def las(self):
+        """ Access the label attachement score of this word """
+        return self._las
+
+    @las.setter
+    def las(self, value):
+        """ Set the word's label attachement score """
+        self._las = value if self._is_null(value) == False else None
+
+    @property
     def deps(self):
         """ Access the dependencies of this word. """
         return self._deps
@@ -743,7 +755,7 @@ class Word:
 
     def pretty_print(self):
         """ Print the word in one line. """
-        features = [ID, TEXT, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL]
+        features = [ID, TEXT, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL, LAS]
         feature_str = ";".join(["{}={}".format(k, getattr(self, k)) for k in features if getattr(self, k) is not None])
         return f"<{self.__class__.__name__} {feature_str}>"
 

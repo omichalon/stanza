@@ -65,7 +65,7 @@ class Trainer(BaseTrainer):
         self.optimizer.step()
         return loss_val
 
-    def predict(self, batch, unsort=True):
+    def predict(self, batch, unsort=True, get_scores = False):
         inputs, orig_idx, word_orig_idx, sentlens, wordlens = unpack_batch(batch, self.use_cuda)
         word, word_mask, wordchars, wordchars_mask, upos, xpos, ufeats, pretrained, lemma, head, deprel = inputs
 
@@ -74,8 +74,11 @@ class Trainer(BaseTrainer):
         _, preds = self.model(word, word_mask, wordchars, wordchars_mask, upos, xpos, ufeats, pretrained, lemma, head, deprel, word_orig_idx, sentlens, wordlens)
         head_seqs = [chuliu_edmonds_one_root(adj[:l, :l])[1:] for adj, l in zip(preds[0], sentlens)] # remove attachment for the root
         deprel_seqs = [self.vocab['deprel'].unmap([preds[1][i][j+1][h] for j, h in enumerate(hs)]) for i, hs in enumerate(head_seqs)]
-
-        pred_tokens = [[[str(head_seqs[i][j]), deprel_seqs[i][j]] for j in range(sentlens[i]-1)] for i in range(batch_size)]
+        if get_scores:
+            scores = [[preds[0][i][j+1][h] for j, h in enumerate(hs)] for i, hs in enumerate(head_seqs)]
+            pred_tokens = [[[str(head_seqs[i][j]), deprel_seqs[i][j], scores[i][j]] for j in range(sentlens[i]-1)] for i in range(batch_size)]
+        else:
+            pred_tokens = [[[str(head_seqs[i][j]), deprel_seqs[i][j]] for j in range(sentlens[i]-1)] for i in range(batch_size)]
         if unsort:
             pred_tokens = utils.unsort(pred_tokens, orig_idx)
         return pred_tokens
